@@ -39,7 +39,7 @@ export async function proxy(request: NextRequest) {
             cookieStore.set("refreshToken", parsed.refreshToken, options);
         }
         if (isPublicRoute) {
-          return NextResponse.redirect(new URL("/profile", request.url), {
+          return NextResponse.redirect(new URL("/", request.url), {
             headers: { Cookie: cookieStore.toString() },
           });
         }
