@@ -27,8 +27,19 @@ export async function proxy(request: NextRequest) {
       if (setCookie) {
         const cookieArray = Array.isArray(setCookie) ? setCookie : [setCookie];
         const parsed = setCookieParser.parse(cookieArray);
+
+        let response: NextResponse;
+
+        if (isPublicRoute) {
+          response = NextResponse.redirect(new URL("/", request.url));
+        } else if (isPrivateRoute) {
+          response = NextResponse.next();
+        } else {
+          return NextResponse.next();
+        }
+
         for (const cookie of parsed) {
-          cookieStore.set(cookie.name, cookie.value, {
+          response.cookies.set(cookie.name, cookie.value, {
             expires: cookie.expires,
             path: cookie.path,
             maxAge: cookie.maxAge,
@@ -36,16 +47,8 @@ export async function proxy(request: NextRequest) {
             secure: cookie.secure,
           });
         }
-        if (isPublicRoute) {
-          return NextResponse.redirect(new URL("/", request.url), {
-            headers: { Cookie: cookieStore.toString() },
-          });
-        }
-        if (isPrivateRoute) {
-          return NextResponse.next({
-            headers: { Cookie: cookieStore.toString() },
-          });
-        }
+
+        return response;
       }
     }
     if (isPublicRoute) return NextResponse.next();
